@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildSystemPrompt } from '../prompts/buildSystemPrompt.js'
 
@@ -10,7 +11,8 @@ export async function askClaude(message, modo = 'CLIENTE') {
     const systemPrompt = buildSystemPrompt(modo)
     
     const response = await anthropic.messages.create({
-      model: 'claude-3-7-sonnet-latest',
+      model: 'claude-haiku-4-5-20251001',
+
       max_tokens: 1024,
       system: systemPrompt,
       messages: [
