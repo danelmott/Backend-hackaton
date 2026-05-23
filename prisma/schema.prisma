@@ -8,12 +8,49 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
+enum UserRole {
   USER
   ADMIN
 }
 
-model User {
-  id   String   @id @default(cuid())
-  role Role     @default(USER)
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
 }
+
+enum Mode {
+  CLIENT
+  // Puedes agregar otros modos si los necesitas
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  role      UserRole @default(USER)
+  chats     Chat[]
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  title     String? 
+  mode      Mode     @default(CLIENT)
+  userId    String
+  user      User     @relation(fields:[userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role      MessageRole 
+  content   String
+  createdAt DateTime @default(now())
+}
+ 
