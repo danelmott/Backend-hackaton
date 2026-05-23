@@ -24,7 +24,7 @@ async function testClaude() {
       messages: [
         {
           role: 'user',
-          content: '¿si tengo un rendimiento de un cdt de 5m a 180 dias cual es la tasa ? ',
+          content: 'que tarjeta de credito me comviene si viajo mucho y gano 5millones al mes en colombia'
         },
       ],
     })
