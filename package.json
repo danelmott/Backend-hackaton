@@ -1,0 +1,24 @@
+{
+  "name": "backend-hackaton",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/danelmott/Backend-hackaton#readme",
+  "bugs": {
+    "url": "https://github.com/danelmott/Backend-hackaton/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danelmott/Backend-hackaton.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "prisma": "^7.8.0"
+  }
+}
