@@ -6,10 +6,10 @@ export const logginController = async(req, res) => {
         const user = req.user;
         const accessToken = authServices.generateAccessToken(user);
         const refreshToken = authServices.generateRefreshToken(user);
-
+        
         await authServices.saveRefreshToken(user.id, refreshToken);
         authServices.setTokenCookies(res, accessToken, refreshToken);
-
+        
         return res.status(200).json({ user, accessToken, refreshToken });
     } 
     catch (error) {
