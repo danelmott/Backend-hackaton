@@ -13,16 +13,18 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "dev": "nodemon server.js",
+  "start": "node server.js"
+},
   "devDependencies": {
     "@types/node": "^25.9.1",
     "nodemon": "^3.1.14",
     "prisma": "6.19.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@prisma/client": "6.19.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
