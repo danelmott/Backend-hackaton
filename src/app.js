@@ -10,22 +10,33 @@ import routerAdmin from './admin/route.js';
 import cors from 'cors'
 import { getClientUrl } from './lib/clientUrl.js';
 
-const clientUrl = getClientUrl();
-const allowedOrigins = [
-    clientUrl,
-    ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
-].filter((origin, index, origins) => origins.indexOf(origin) === index);
+function getAllowedOrigins() {
+    return [
+        getClientUrl(),
+        ...(process.env.NODE_ENV !== 'production'
+            ? ['http://localhost:3000', 'http://127.0.0.1:3000']
+            : []),
+    ].filter((origin, index, origins) => origin && origins.indexOf(origin) === index);
+}
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.RENDER) {
     app.set('trust proxy', 1);
 }
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin(origin, callback) {
+        const allowed = getAllowedOrigins();
+        if (!origin || allowed.includes(origin)) {
+            callback(null, origin ?? true);
+            return;
+        }
+        console.warn('[CORS] Origen rechazado:', origin, '| permitidos:', allowed);
+        callback(new Error('No permitido por CORS'));
+    },
     credentials: true,
-}))
+}));
 
 app.use(express.json());
 app.use(cookieParser());

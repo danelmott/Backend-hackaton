@@ -1,0 +1,41 @@
+# Blueprint Render — https://render.com/docs/blueprint-spec
+# Conecta el repo en Render y usa "New > Blueprint" o crea un Web Service manual con estos comandos.
+
+services:
+  - type: web
+    name: serfi-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run render-build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: ACCESS_SIGNATURE
+        sync: false
+      - key: REFRESH_SIGNATURE
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

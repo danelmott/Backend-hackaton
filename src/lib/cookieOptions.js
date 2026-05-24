@@ -1,20 +1,14 @@
 const TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
-function isProduction() {
-  return process.env.NODE_ENV === 'production';
-}
-
 /**
- * Opciones de cookies para auth cross-domain (Vercel + API separado).
- * Prod: secure + sameSite none. Local: lax sin secure.
+ * Front y API en dominios/puertos distintos → cookies cross-site.
+ * SameSite=None + Secure (localhost cuenta como contexto seguro).
  */
 export function getCookieOptions() {
-  const prod = isProduction();
-
   return {
     httpOnly: true,
-    secure: prod,
-    sameSite: prod ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
     path: '/',
     maxAge: TOKEN_MAX_AGE,
   };

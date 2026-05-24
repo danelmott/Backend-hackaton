@@ -12,7 +12,7 @@ import { OFFICIAL_PRODUCTS_PROMPT } from '../lib/tools/toolDefinitions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Rutas literales: el file tracer de Vercel solo detecta lecturas estáticas de fs.
+// Lectura de prompts desde archivos .md en tiempo de arranque.
 const IDENTITY = fs.readFileSync(path.join(__dirname, 'identity.md'), 'utf-8');
 const KNOWLEDGE = fs.readFileSync(path.join(__dirname, 'serfinanza_knowledge.md'), 'utf-8');
 const PROTOCOL = fs.readFileSync(path.join(__dirname, 'protocol.md'), 'utf-8');

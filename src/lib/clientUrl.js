@@ -1,13 +1,10 @@
-/** Frontend en producción (Vercel). Sobrescribible con CLIENT_URL. */
-const PRODUCTION_CLIENT_URL = 'https://frontend-hackaton-virid.vercel.app';
-
 /**
  * URL base del frontend. CORS, redirecciones post-auth y OAuth usan esto.
+ * En producción define CLIENT_URL (ej. https://tu-frontend.com).
  */
 export function getClientUrl() {
   const fromEnv = process.env.CLIENT_URL?.replace(/\/$/, '');
   if (fromEnv) return fromEnv;
-  if (process.env.NODE_ENV === 'production') return PRODUCTION_CLIENT_URL;
   return 'http://localhost:3000';
 }
 
