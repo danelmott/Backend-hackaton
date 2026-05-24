@@ -14,10 +14,25 @@ router.post('/logout', authControllers.logoutController);
 router.post('/refresh', passport.authenticate('jwt-refresh', {session: false}), authControllers.refreshController);
 
 router.get('/me', requireAuth, authControllers.meController);
+const clientUrl = () => process.env.CLIENT_URL || 'http://localhost:3000';
+
 router.get('/google', passport.authenticate('google', { session: false, scope: ['profile', 'email'] }));
-router.get('/google/callback', 
-    passport.authenticate('google', { session: false, failureRedirect: `${process.env.CLIENT_URL}/login?error=google` }),
-    authControllers.googleCallbackController 
-);
+
+router.get('/google/callback', (req, res, next) => {
+    passport.authenticate('google', { session: false }, (err, user, info) => {
+        if (err) {
+            console.error('[Google OAuth] Error en callback:', err);
+            return res.redirect(`${clientUrl()}/chat?error=google_server`);
+        }
+
+        if (!user) {
+            console.error('[Google OAuth] Autenticación rechazada:', info);
+            return res.redirect(`${clientUrl()}/chat?error=google_denied`);
+        }
+
+        req.user = user;
+        return authControllers.googleCallbackController(req, res, next);
+    })(req, res, next);
+});
 
 export default router

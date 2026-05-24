@@ -62,20 +62,16 @@ export const saveRefreshToken = async (userId, token) => {
 
 //COOKIES
 export const setTokenCookies = (res, accessToken, refreshToken) => {
-    res.cookie('accessToken', accessToken, {
+    const cookieOptions = {
         httpOnly: true,
         secure: false,
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-    
-    res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-}
+    };
+
+    res.cookie('accessToken', accessToken, cookieOptions);
+    res.cookie('refreshToken', refreshToken, cookieOptions);
+};
 
 
 export const rotateRefreshToken = async (userId, oldToken) => {

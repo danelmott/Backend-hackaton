@@ -126,18 +126,25 @@ export const refreshController = async (req, res) => {
 }
 
 export const googleCallbackController = async (req, res) => {
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+
     try {
         const user = req.user;
+
+        if (!user?.id || !user?.email) {
+            console.error('[Google OAuth] Usuario inválido en callback:', user);
+            return res.redirect(`${clientUrl}/chat?error=google_no_user`);
+        }
+
         const accessToken = authServices.generateAccessToken(user);
         const refreshToken = authServices.generateRefreshToken(user);
-        
+
         await authServices.saveRefreshToken(user.id, refreshToken);
         authServices.setTokenCookies(res, accessToken, refreshToken);
-        
-        return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-    } 
-    catch(error) {
-        console.error("Error in google callback controller: ", error);
-        return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
+
+        return res.redirect(`${clientUrl}/chat`);
+    } catch (error) {
+        console.error('[Google OAuth] Error en callback controller:', error);
+        return res.redirect(`${clientUrl}/chat?error=google`);
     }
-}
+};
