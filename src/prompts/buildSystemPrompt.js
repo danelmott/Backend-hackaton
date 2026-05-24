@@ -12,14 +12,11 @@ import { OFFICIAL_PRODUCTS_PROMPT } from '../lib/tools/toolDefinitions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function loadPromptFile(filename) {
-  return fs.readFileSync(path.join(__dirname, filename), 'utf-8');
-}
-
-const IDENTITY = loadPromptFile('identity.md');
-const KNOWLEDGE = loadPromptFile('serfinanza_knowledge.md');
-const PROTOCOL = loadPromptFile('protocol.md');
-const RULES = loadPromptFile('rules.md');
+// Rutas literales: el file tracer de Vercel solo detecta lecturas estáticas de fs.
+const IDENTITY = fs.readFileSync(path.join(__dirname, 'identity.md'), 'utf-8');
+const KNOWLEDGE = fs.readFileSync(path.join(__dirname, 'serfinanza_knowledge.md'), 'utf-8');
+const PROTOCOL = fs.readFileSync(path.join(__dirname, 'protocol.md'), 'utf-8');
+const RULES = fs.readFileSync(path.join(__dirname, 'rules.md'), 'utf-8');
 
 const PERSONAS = {
   CLIENTE: `Eres "Serfi", una guía recomendativa sobre el Banco Serfinanza.
