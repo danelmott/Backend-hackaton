@@ -13,12 +13,15 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "server.js",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "build": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy",
+    "render-build": "prisma generate && prisma migrate deploy",
     "postinstall": "prisma generate"
   },
   "devDependencies": {

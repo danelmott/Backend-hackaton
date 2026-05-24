@@ -1,7 +1,8 @@
 const TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 /**
- * Cookies de auth para frontend y API en dominios distintos (Render + Vercel).
+ * Cookies de auth para frontend y API en dominios/puertos distintos (Render + Vercel).
+ * SameSite=None + Secure (localhost cuenta como contexto seguro).
  */
 export function getCookieOptions() {
   return {

@@ -5,6 +5,7 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { prisma } from '../lib/prismaClient.js';
 import bcrypt from 'bcrypt';
 import passport from 'passport';
+import { googleCallbackUrl } from '../lib/serverUrl.js';
 
 const JWTStratategy = () => {
   passport.use(
@@ -99,9 +100,7 @@ function getGoogleCallbackURL() {
   if (process.env.GOOGLE_CALLBACK_URL) {
     return process.env.GOOGLE_CALLBACK_URL.replace(/\/$/, '');
   }
-
-  const port = process.env.PORT || 4000;
-  return `http://localhost:${port}/auth/google/callback`;
+  return googleCallbackUrl();
 }
 
 const googleStrategy = () => {
