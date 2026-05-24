@@ -99,48 +99,75 @@ function localStrategy() {
 }
 
 
+const getGoogleCallbackURL = () => {
+    if (process.env.GOOGLE_CALLBACK_URL) {
+        return process.env.GOOGLE_CALLBACK_URL;
+    }
+
+    const port = process.env.PORT || 4000;
+    return `http://localhost:${port}/auth/google/callback`;
+};
+
 const googleStrategy = () => {
+    const callbackURL = getGoogleCallbackURL();
+
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        console.warn('[Google OAuth] GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están definidos.');
+    } else {
+        console.log(`[Google OAuth] callback URL: ${callbackURL}`);
+    }
+
     passport.use(
         new GoogleStrategy(
             {
                 clientID: process.env.GOOGLE_CLIENT_ID,
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                callbackURL: process.env.GOOGLE_CALLBACK_URL,
+                callbackURL,
                 scope: ['profile', 'email'],
             },
             async (_accessToken, _refreshToken, profile, done) => {
                 try {
-                    const email = profile.emails?.[0]?.value;
-                    
-                    // Caso 1: ¿Existe un usuario con ese email?
+                    const email = profile.emails?.[0]?.value?.trim()?.toLowerCase();
+
+                    if (!email) {
+                        return done(null, false, {
+                            message: 'Google no devolvió un correo electrónico. Usa una cuenta con email verificado.',
+                        });
+                    }
+
                     const existingUser = await prisma.user.findUnique({
                         where: { email },
                         include: { accounts: true },
                     });
-                    
+
                     if (existingUser) {
-                        const alreadyLinked = existingUser.accounts.some(
+                        const hasGoogle = existingUser.accounts.some(
                             (a) => a.provider === 'GOOGLE'
                         );
-                        
-                        if (alreadyLinked) return done(null, existingUser);
-                        
-                        const [user] = await prisma.$transaction([
-                            prisma.user.update({
-                                where: { id: existingUser.id },
-                                data: { emailVerified: true },
-                            }),
-                            prisma.account.create({
+
+                        if (!hasGoogle) {
+                            await prisma.account.create({
                                 data: {
                                     provider: 'GOOGLE',
                                     userId: existingUser.id,
                                 },
-                            }),
-                        ]);
+                            });
+                        }
+
+                        if (!existingUser.emailVerified) {
+                            await prisma.user.update({
+                                where: { id: existingUser.id },
+                                data: { emailVerified: true },
+                            });
+                        }
+
+                        const user = await prisma.user.findUnique({
+                            where: { id: existingUser.id },
+                        });
+
                         return done(null, user);
                     }
-                    
-                    // Caso 2: Usuario nuevo → crear usuario + cuenta Google juntos
+
                     const user = await prisma.user.create({
                         data: {
                             email,
@@ -152,9 +179,10 @@ const googleStrategy = () => {
                             },
                         },
                     });
+
                     return done(null, user);
-                } 
-                catch (err) {
+                } catch (err) {
+                    console.error('[Google OAuth] Error en estrategia:', err);
                     return done(err, false);
                 }
             }
