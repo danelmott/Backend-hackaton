@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { prisma } from "../../lib/prismaClient.js";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
+import { sendEmail } from '../../lib/mailer.js';
+import { verificationCodeTemplate } from '../../lib/templates/codeEmail.template.js';
 
 //helpers
 const buildPayload = (user) => {
@@ -29,7 +30,7 @@ const generateCode = async () => {
 
 export const generateAccessToken = (user) => {
     return jwt.sign(buildPayload(user), process.env.ACCESS_SIGNATURE, {
-        expiresIn: "15m"
+        expiresIn: "7d"
     });
 }
 
@@ -63,14 +64,14 @@ export const saveRefreshToken = async (userId, token) => {
 export const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: 'false',
+        secure: false,
         sameSite: 'strict',
-        maxAge: 15 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000
     });
     
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: 'false',
+        secure: false,
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000,
     });
