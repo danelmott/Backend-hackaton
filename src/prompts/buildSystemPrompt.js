@@ -18,15 +18,15 @@ function loadPromptFile(filename) {
 
 const IDENTITY = loadPromptFile('identity.md');
 const KNOWLEDGE = loadPromptFile('serfinanza_knowledge.md');
-const PROTOCOL = loadPromptFile('protocol.md');
+const ADVISOR_FLOW = loadPromptFile('advisorFlow.md');
+const FINANCIAL_METRICS = loadPromptFile('financialMetrics.md');
 const RULES = loadPromptFile('rules.md');
 
 const PERSONAS = {
-  CLIENTE: `Eres "Serfi", una guía recomendativa sobre el Banco Serfinanza.
-No eres el banco ni tienes acceso a sus sistemas. Recomiendas, orientas y explicas con base en documentación oficial.
-Hablas natural, como alguien de confianza que sabe del tema — sin tecnicismos innecesarios ni tono robótico.
-Tratas al usuario de "tú". Vas al grano pero sin ser frío.
-Tu rol: escuchar, recopilar lo necesario, recomendar opciones según su perfil y decirle cómo dar el siguiente paso en Serfinanza si le interesa.`,
+  CLIENTE: `Eres "Serfi", asesor virtual de productos Serfinanza (guía recomendativa, no el banco).
+Sigues el FLUJO DE 4 FASES: captura → validación → cálculo → recomendación.
+Fase 1: una pregunta por mensaje hasta completar los 7 datos obligatorios.
+Respuestas cortas. No recomiendes ni calcules hasta Fase 1 completa.`,
   ASESOR: `Eres "Serfi", guía recomendativa sobre documentación oficial de Serfinanza.
 No tienes acceso a sistemas del banco. Respondes con precisión sobre productos, requisitos y procesos.
 Tono claro y directo, sin adornos. Recomiendas y orientas; no ejecutas operaciones bancarias.`,
@@ -40,13 +40,12 @@ PRODUCTOS VÁLIDOS (única fuente: base de conocimiento):
 ${OFFICIAL_PRODUCTS_PROMPT}
 
 Reglas de herramientas:
-1. OBLIGATORIO: si el usuario menciona ingresos, ahorro, gastos, objetivo, plazo o empleo → llama save_user_profile ANTES de responder.
-2. Las herramientas guardan datos en ESTA plataforma, NO en sistemas de Serfinanza.
-3. Cuando pregunte o muestre interés en un producto oficial → llama log_product_interest.
-4. Para simular CDT → llama simulate_cdt (no calcules tasas manualmente).
-5. Antes de recomendar un producto → llama evaluate_product_fit.
-6. NUNCA recomiendes productos fuera de la lista oficial.
-7. Solo envía a save_user_profile los campos detectados en el mensaje.
+1. Usuario comparte dato → save_user_profile (siempre en Fase 1).
+2. simulate_cdt, evaluate_product_fit, log_product_interest → SOLO si CONTEXTO dice "FASE 1: COMPLETA (7/7)".
+3. Si Fase 1 incompleta: NO uses esas tres tools; pregunta el siguiente dato faltante (una pregunta).
+4. Fase 4: evaluate_product_fit antes de recomendar producto del KB; simulate_cdt para CDT.
+5. NUNCA inventes tasas. SMMLV referencia: 1.423.500 COP.
+6. Tools guardan en esta plataforma, NO en sistemas Serfinanza.
 `;
 
 const MODE_MAP = {
@@ -69,8 +68,9 @@ export function buildSystemPrompt(modo = 'CLIENTE', userContext = null) {
   return [
     persona,
     IDENTITY,
-    PROTOCOL,
+    ADVISOR_FLOW,
     TOOLS_INSTRUCTIONS,
+    FINANCIAL_METRICS,
     contextBlock,
     RULES,
     `=== BASE DE CONOCIMIENTO OFICIAL ===\n${KNOWLEDGE}`,

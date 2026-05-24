@@ -10,6 +10,8 @@ const anthropic = new Anthropic({
 
 const MAX_HISTORY_MESSAGES = 20;
 const MAX_TOOL_ITERATIONS = 5;
+/** Sonnet 4.6: buen balance calidad/velocidad. Opus: claude-opus-4-7 en .env */
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6';
 
 function toAnthropicRole(role) {
   if (role === 'ASSISTANT') return 'assistant';
@@ -39,7 +41,7 @@ function extractText(response) {
 
 function messageLikelyHasProfileData(text = '') {
   const lower = text.toLowerCase();
-  return /gano|ingreso|tengo|ahorr|invert|gast|millon|mil|meses|empleado|independiente|cdt|tarjeta|objetivo|meta/.test(lower);
+  return /gano|ingreso|tengo|ahorr|invert|gast|millon|mil|meses|a[nñ]os|edad|empleado|independiente|pensionad|deuda|cuota|antig|cdt|tarjeta|veh[ií]culo|hipotec|objetivo|meta|producto/.test(lower);
 }
 
 export async function askClaude(options, legacyModo = 'CLIENTE') {
@@ -62,8 +64,8 @@ export async function askClaude(options, legacyModo = 'CLIENTE') {
     const shouldForceProfileTool = useTools && messageLikelyHasProfileData(message);
 
     let response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
+      model: ANTHROPIC_MODEL,
+      max_tokens: 512,
       system: [
         {
           type: 'text',
@@ -105,8 +107,8 @@ export async function askClaude(options, legacyModo = 'CLIENTE') {
       ];
 
       response = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
+        model: ANTHROPIC_MODEL,
+        max_tokens: 512,
         system: [
           {
             type: 'text',

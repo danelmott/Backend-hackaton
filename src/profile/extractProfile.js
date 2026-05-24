@@ -92,7 +92,56 @@ export function extractProfileFromMessage(text) {
   }
 
   if (/independiente|freelance|por mi cuenta/.test(lower)) extracted.employmentType = 'independiente';
+  else if (/pensionad[oa]|jubilad[oa]/.test(lower)) extracted.employmentType = 'pensionado';
   else if (/empleado|nomina|n[oó]mina|salario/.test(lower)) extracted.employmentType = 'empleado';
+
+  const seniorityMatch = lower.match(/(?:llevo|tengo|antig[uü]edad(?:\s+de)?)\s+(\d+)\s*(a[nñ]os?|meses?)/i);
+  if (seniorityMatch) {
+    const n = seniorityMatch[1];
+    const unit = seniorityMatch[2].startsWith('a') ? 'años' : 'meses';
+    extracted.employmentSeniority = `${n} ${unit}`;
+  } else if (/m[aá]s de un a[nñ]o|m[aá]s de 1 a[nñ]o/.test(lower)) {
+    extracted.employmentSeniority = '1 año';
+  } else if (/menos de 6 meses|reci[eé]n empec[eé]/.test(lower)) {
+    extracted.employmentSeniority = '3 meses';
+  }
+
+  const debtPatterns = [
+    /(?:pago|cuotas?\s+(?:de\s+)?(?:deudas?|cr[eé]ditos?|tarjetas?))\s+(?:de\s+)?(?:\$?\s*)?([\d.,]+\s*(?:millones?|mil)?)/i,
+    /(?:deudas?\s+(?:de|por)\s+)(?:\$?\s*)?([\d.,]+\s*(?:millones?|mil)?)\s*(?:al mes|mensual(?:es)?)?/i,
+    /(?:cuotas?\s+mensuales?\s+(?:de\s+)?)(?:\$?\s*)?([\d.,]+\s*(?:millones?|mil)?)/i,
+  ];
+  for (const pattern of debtPatterns) {
+    const match = lower.match(pattern);
+    if (match) {
+      const amount = parseCopAmount(match[1]);
+      if (amount != null) extracted.monthlyDebtPayments = amount;
+      break;
+    }
+  }
+  if (/sin deudas?|no tengo deudas?|no debo nada|cuotas?\s+0/.test(lower)) {
+    extracted.monthlyDebtPayments = 0;
+  }
+
+  const ageMatch = lower.match(/(?:tengo|edad(?:\s+de)?)\s+(\d{2})\s*a[nñ]os?/i) || lower.match(/\b(\d{2})\s*a[nñ]os?\b/);
+  if (ageMatch) {
+    const age = parseInt(ageMatch[1], 10);
+    if (age >= 18 && age <= 100) extracted.age = age;
+  }
+
+  const targetProductPatterns = [
+    { re: /cr[eé]dito\s+(?:de\s+)?veh[ií]culo|cr[eé]dito\s+vehicular|comprar\s+(?:un\s+)?(?:carro|veh[ií]culo|moto)/, value: 'crédito vehículo' },
+    { re: /libre\s+inversi[oó]n|cr[eé]dito\s+libre/, value: 'libre inversión' },
+    { re: /hipotecario|vivienda|comprar\s+casa/, value: 'crédito hipotecario' },
+    { re: /cdt|certificado de dep[oó]sito/, value: 'CDT' },
+    { re: /tarjeta\s+de\s+cr[eé]dito|tarjeta/, value: 'tarjeta de crédito' },
+  ];
+  for (const { re, value } of targetProductPatterns) {
+    if (re.test(lower)) {
+      extracted.targetProduct = value;
+      break;
+    }
+  }
 
   const products = [];
   if (/cdt|certificado de dep[oó]sito/.test(lower) && isOfficialProductId('cdt')) products.push('cdt');

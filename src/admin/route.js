@@ -10,6 +10,7 @@ router.use(requireRole('ADMIN'));
 
 router.get('/dashboard', adminControllers.dashboardController);
 router.get('/leads', adminControllers.leadsController);
+router.get('/notifications/stream', adminControllers.notificationsStreamController);
 router.get('/users/:userId', adminControllers.userDetailController);
 
 export default router;

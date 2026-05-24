@@ -7,19 +7,15 @@ import cookieParser from 'cookie-parser';
 import routerChats from './chats/route.js';
 import routerMessages from './messages/route.js';
 import routerAdmin from './admin/route.js';
+import routerProfile from './profile/route.js';
 import cors from 'cors'
 import { getClientUrl } from './lib/clientUrl.js';
 
-const allowedOrigins = [
-    getClientUrl(),
-    ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
-].filter(Boolean);
+const allowedOrigins = [getClientUrl()].filter(Boolean);
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') {
-    app.set('trust proxy', 1);
-}
+app.set('trust proxy', 1);
 
 app.use(cors({
     origin: allowedOrigins,
@@ -40,5 +36,6 @@ app.use('/auth', routerAuth);
 app.use('/chats', routerChats);
 app.use('/messages', routerMessages);
 app.use('/admin', routerAdmin);
+app.use('/profile', routerProfile);
 
 export default app;

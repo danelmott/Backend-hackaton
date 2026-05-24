@@ -4,6 +4,8 @@
  * Datos extraídos de serfinanza_knowledge.md
  */
 
+export const SMMLV_COP = 1_423_500;
+
 export const OFFICIAL_PRODUCT_IDS = [
   'tarjeta_credito',
   'cdt',

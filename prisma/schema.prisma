@@ -55,6 +55,10 @@ model UserProfile {
   goalTimeframe        String?
   productsOfInterest   String[] @default([])
   employmentType       String?
+  employmentSeniority  String?
+  monthlyDebtPayments  Int?
+  age                  Int?
+  targetProduct        String?
   inferredProfile      String?
   urgencyLevel         String?
   financialHealthScore Int?

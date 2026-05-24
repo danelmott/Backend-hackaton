@@ -3,6 +3,7 @@ import { prisma } from "../../lib/prismaClient.js";
 import { askClaude } from '../../lib/IA.service.js';
 import { getUserProfile, profileToContext, saveUserProfile } from '../../profile/profile.service.js';
 import { extractProfileFromMessage } from '../../profile/extractProfile.js';
+import { getNextStructuredQuestion, getQuestionsState } from '../../profile/question.service.js';
 
 const DEFAULT_CHAT_TITLE = 'Nuevo chat';
 const TITLE_MAX_LENGTH = 60;
@@ -49,7 +50,7 @@ export const sendMessage = async (chatId, userId, content) => {
             await saveUserProfile(userId, extracted);
         }
 
-        const profile = await getUserProfile(userId);
+        let profile = await getUserProfile(userId);
 
         const aiResponse = await askClaude({
             message: content,
@@ -58,6 +59,10 @@ export const sendMessage = async (chatId, userId, content) => {
             userContext: profileToContext(profile),
             userId,
         });
+
+        profile = await getUserProfile(userId);
+        const questionsState = getQuestionsState(profile);
+        const structuredQuestion = getNextStructuredQuestion(profile);
         
         const assistantMessage = await prisma.message.create({
             data: {
@@ -80,6 +85,8 @@ export const sendMessage = async (chatId, userId, content) => {
         return {
             userMessage,
             assistantMessage,
+            structuredQuestion,
+            questionsState,
             ...(chatTitle ? { chatTitle } : {}),
         };
     } 

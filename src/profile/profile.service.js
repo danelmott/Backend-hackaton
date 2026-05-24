@@ -8,14 +8,42 @@ import {
   getOfficialProduct,
 } from '../lib/productCatalog.js';
 
+/** Campos obligatorios Fase 1 del flujo de asesoría */
+export const PHASE_1_FIELD_KEYS = [
+  'employmentType',
+  'monthlyIncome',
+  'employmentSeniority',
+  'monthlyDebtPayments',
+  'currentSavings',
+  'age',
+  'targetProduct',
+];
+
+export function isPhase1Complete(profile) {
+  if (!profile) return false;
+  return PHASE_1_FIELD_KEYS.every((key) => {
+    const val = profile[key];
+    if (key === 'monthlyDebtPayments') {
+      return val !== null && val !== undefined;
+    }
+    return val !== null && val !== undefined && val !== '';
+  });
+}
+
 function cleanProfileData(data, existing = null) {
   const cleaned = {};
   if (data.objective !== undefined) cleaned.objective = data.objective;
   if (data.monthlyIncome !== undefined) cleaned.monthlyIncome = Math.round(Number(data.monthlyIncome));
   if (data.currentSavings !== undefined) cleaned.currentSavings = Math.round(Number(data.currentSavings));
   if (data.fixedExpenses !== undefined) cleaned.fixedExpenses = Math.round(Number(data.fixedExpenses));
+  if (data.monthlyDebtPayments !== undefined) {
+    cleaned.monthlyDebtPayments = Math.round(Number(data.monthlyDebtPayments));
+  }
+  if (data.age !== undefined) cleaned.age = Math.round(Number(data.age));
   if (data.goalTimeframe !== undefined) cleaned.goalTimeframe = data.goalTimeframe;
   if (data.employmentType !== undefined) cleaned.employmentType = data.employmentType;
+  if (data.employmentSeniority !== undefined) cleaned.employmentSeniority = data.employmentSeniority;
+  if (data.targetProduct !== undefined) cleaned.targetProduct = data.targetProduct;
   if (data.productsOfInterest !== undefined) {
     const incoming = Array.isArray(data.productsOfInterest)
       ? data.productsOfInterest.filter(isOfficialProductId)
@@ -63,6 +91,14 @@ export async function logProductInterest(userId, productId, variant = null) {
     throw { code: 'INVALID_PRODUCT', message: 'Producto no oficial de Serfinanza.' };
   }
 
+  const profile = await getUserProfile(userId);
+  if (!isPhase1Complete(profile)) {
+    throw {
+      code: 'PHASE_1_INCOMPLETE',
+      message: 'Fase 1 incompleta. Captura todos los datos obligatorios antes de registrar interés.',
+    };
+  }
+
   const product = getOfficialProduct(productId);
   const safeVariant = variant && product?.variants?.includes(variant) ? variant : null;
 
@@ -86,7 +122,6 @@ export async function logProductInterest(userId, productId, variant = null) {
     },
   });
 
-  const profile = await getUserProfile(userId);
   const currentProducts = profile?.productsOfInterest ?? [];
   if (!currentProducts.includes(productId)) {
     await saveUserProfile(userId, {
@@ -99,6 +134,13 @@ export async function logProductInterest(userId, productId, variant = null) {
 
 export async function runSimulateCdt(userId, { amount, termDays }) {
   const profile = await getUserProfile(userId);
+  if (!isPhase1Complete(profile)) {
+    return {
+      success: false,
+      message: 'Fase 1 incompleta. Captura todos los datos obligatorios antes de simular.',
+    };
+  }
+
   const savings = profile?.currentSavings;
   const investAmount = amount ?? savings;
 
@@ -124,11 +166,18 @@ export async function runEvaluateProductFit(userId, { productId, variant = null 
   }
 
   const profile = await getUserProfile(userId);
+  if (!isPhase1Complete(profile)) {
+    return {
+      success: false,
+      message: 'Fase 1 incompleta. Captura todos los datos obligatorios antes de evaluar productos.',
+    };
+  }
+
   const eligibility = evaluateProductEligibility(productId, profile, variant);
 
   await logProductInterest(userId, productId, variant);
 
-  return { success: true, eligibility, profileComplete: Boolean(profile?.monthlyIncome || profile?.currentSavings) };
+  return { success: true, eligibility, phase1Complete: true };
 }
 
 export function profileToContext(profile) {
@@ -138,11 +187,17 @@ export function profileToContext(profile) {
     monthlyIncome: profile.monthlyIncome,
     currentSavings: profile.currentSavings,
     fixedExpenses: profile.fixedExpenses,
+    monthlyDebtPayments: profile.monthlyDebtPayments,
+    age: profile.age,
+    employmentSeniority: profile.employmentSeniority,
+    targetProduct: profile.targetProduct,
     goalTimeframe: profile.goalTimeframe,
     productsOfInterest: profile.productsOfInterest,
     employmentType: profile.employmentType,
     inferredProfile: profile.inferredProfile,
     urgencyLevel: profile.urgencyLevel,
+    financialHealthScore: profile.financialHealthScore,
+    phase1Complete: isPhase1Complete(profile),
     lastProductConsulted: profile.productsOfInterest?.at(-1) ?? null,
   };
 }
