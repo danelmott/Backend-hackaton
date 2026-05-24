@@ -6,7 +6,30 @@ import * as authControllers from './controllers/auth.controllers.js';
 const router = Router();
 
 
-router.post('/login', passport.authenticate('local', {session: false}) , authControllers.logginController);
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', { session: false }, (err, user, info) => {
+        if (err) {
+            console.error('[Login]', err);
+            return res.status(500).json({
+                message: 'Error interno del servidor',
+                code: 'INTERNAL_SERVER_ERROR',
+            });
+        }
+
+        if (!user) {
+            const isUnverified = info?.code === 'EMAIL_NOT_VERIFIED';
+
+            return res.status(isUnverified ? 403 : 401).json({
+                code: info?.code || 'INVALID_CREDENTIALS',
+                message: info?.message || 'Credenciales inválidas',
+                ...(isUnverified && info?.email ? { email: info.email } : {}),
+            });
+        }
+
+        req.user = user;
+        return authControllers.logginController(req, res, next);
+    })(req, res, next);
+});
 router.post('/register', authControllers.registerController);
 router.post('/verification-user', authControllers.verifyCodeController);
 router.post('/resend-verification', authControllers.resendVerifyCodeController);

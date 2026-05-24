@@ -4,6 +4,7 @@ import { askClaude } from '../../lib/IA.service.js';
 
 const DEFAULT_CHAT_TITLE = 'Nuevo chat';
 const TITLE_MAX_LENGTH = 60;
+const MAX_HISTORY_FOR_AI = 20;
 
 function truncateTitle(text) {
     const trimmed = text.trim().replace(/\s+/g, ' ');
@@ -24,12 +25,15 @@ export const sendMessage = async (chatId, userId, content) => {
         if (!chat) throw { code: 'CHAT_NOT_FOUND', message: 'El chat no existe' };
         if (chat.userId !== userId) throw { code: 'UNAUTHORIZED_CHAT_ACCESS', message: 'No tienes permisos para este chat' };
 
-        const existingMessagesCount = await prisma.message.count({
+        const previousMessages = await prisma.message.findMany({
             where: { chatId },
+            orderBy: { createdAt: 'asc' },
+            take: MAX_HISTORY_FOR_AI,
+            select: { role: true, content: true },
         });
-        const isFirstMessage = existingMessagesCount === 0;
+
+        const isFirstMessage = previousMessages.length === 0;
         
-        // 2. Guardar el mensaje del usuario en la base de datos
         const userMessage = await prisma.message.create({
             data: {
                 chatId,
@@ -38,10 +42,13 @@ export const sendMessage = async (chatId, userId, content) => {
             }
         });
         
-        // 3. Consultar a Claude usando el modo del chat
-        const aiResponse = await askClaude(content, chat.mode);
+        const aiResponse = await askClaude({
+            message: content,
+            history: previousMessages,
+            modo: chat.mode,
+            userContext: null,
+        });
         
-        // 4. Guardar la respuesta del asistente en la base de datos
         const assistantMessage = await prisma.message.create({
             data: {
                 chatId,
@@ -50,7 +57,6 @@ export const sendMessage = async (chatId, userId, content) => {
             }
         });
         
-        // Opcional: Actualizar el updatedAt del chat y título con el primer mensaje
         const chatTitle = isFirstMessage ? truncateTitle(content) : undefined;
 
         await prisma.chat.update({
@@ -77,7 +83,7 @@ export const sendMessage = async (chatId, userId, content) => {
         };
     }
 }
-//aun no se utiliza
+
 export const deleteMessage = async (messageId) => {
     try {
         if (!messageId) throw { code: 'MISSING_REQUIRED_FIELDS', message: 'El messageId es requerido' };
@@ -96,4 +102,3 @@ export const deleteMessage = async (messageId) => {
         };
     }
 }
-

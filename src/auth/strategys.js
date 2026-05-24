@@ -84,7 +84,8 @@ function localStrategy() {
                 if(!user.emailVerified) {
                     return done(null, false, {
                         code: 'EMAIL_NOT_VERIFIED',
-                        message: 'Debes verificar tu correo antes de iniciar sesion'
+                        message: 'Debes verificar tu correo antes de iniciar sesion',
+                        email: user.email,
                     });
                 }
                 
