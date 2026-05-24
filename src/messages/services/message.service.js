@@ -2,6 +2,15 @@ import 'dotenv/config';
 import { prisma } from "../../lib/prismaClient.js";
 import { askClaude } from '../../lib/IA.service.js';
 
+const DEFAULT_CHAT_TITLE = 'Nuevo chat';
+const TITLE_MAX_LENGTH = 60;
+
+function truncateTitle(text) {
+    const trimmed = text.trim().replace(/\s+/g, ' ');
+    if (trimmed.length <= TITLE_MAX_LENGTH) return trimmed;
+    return `${trimmed.slice(0, TITLE_MAX_LENGTH).trimEnd()}…`;
+}
+
 export const sendMessage = async (chatId, userId, content) => {
     try {
         if (!chatId || !userId || !content) {
@@ -14,6 +23,11 @@ export const sendMessage = async (chatId, userId, content) => {
         
         if (!chat) throw { code: 'CHAT_NOT_FOUND', message: 'El chat no existe' };
         if (chat.userId !== userId) throw { code: 'UNAUTHORIZED_CHAT_ACCESS', message: 'No tienes permisos para este chat' };
+
+        const existingMessagesCount = await prisma.message.count({
+            where: { chatId },
+        });
+        const isFirstMessage = existingMessagesCount === 0;
         
         // 2. Guardar el mensaje del usuario en la base de datos
         const userMessage = await prisma.message.create({
@@ -36,15 +50,21 @@ export const sendMessage = async (chatId, userId, content) => {
             }
         });
         
-        // Opcional: Actualizar el updatedAt del chat
+        // Opcional: Actualizar el updatedAt del chat y título con el primer mensaje
+        const chatTitle = isFirstMessage ? truncateTitle(content) : undefined;
+
         await prisma.chat.update({
             where: { id: chatId },
-            data: { updatedAt: new Date() }
+            data: {
+                updatedAt: new Date(),
+                ...(chatTitle ? { title: chatTitle } : {}),
+            },
         });
         
         return {
             userMessage,
-            assistantMessage
+            assistantMessage,
+            ...(chatTitle ? { chatTitle } : {}),
         };
     } 
     catch (error) {

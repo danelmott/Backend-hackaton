@@ -1,5 +1,23 @@
 import { prisma } from '../../lib/prismaClient.js';
 
+const DEFAULT_CHAT_TITLE = 'Nuevo chat';
+const TITLE_MAX_LENGTH = 60;
+
+function truncateTitle(text) {
+  if (!text) return DEFAULT_CHAT_TITLE;
+  const trimmed = text.trim().replace(/\s+/g, ' ');
+  if (trimmed.length <= TITLE_MAX_LENGTH) return trimmed;
+  return `${trimmed.slice(0, TITLE_MAX_LENGTH).trimEnd()}…`;
+}
+
+function resolveChatTitle(chat) {
+  const firstUserMessage = chat.messages?.[0]?.content;
+  if (!chat.title || chat.title === DEFAULT_CHAT_TITLE) {
+    return truncateTitle(firstUserMessage) || chat.title || DEFAULT_CHAT_TITLE;
+  }
+  return chat.title;
+}
+
 export const createChat = async (userId, title, mode = 'CLIENT') => {
   try {
     if (!userId || !title) throw { code: 'MISSING_REQUIRED_FIELDS', message: 'El userId y title son requeridos' };
@@ -29,7 +47,20 @@ export const getUserChats = async (userId) => {
     return await prisma.chat.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' },
-    });
+      include: {
+        messages: {
+          where: { role: 'USER' },
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+          select: { content: true },
+        },
+      },
+    }).then((chats) =>
+      chats.map(({ messages, ...chat }) => ({
+        ...chat,
+        title: resolveChatTitle({ ...chat, messages }),
+      }))
+    );
   } catch (error) {
     console.error('[error] error getting user chats', error);
     if (error.code) throw error;
