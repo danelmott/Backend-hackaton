@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import routerChats from './chats/route.js';
 import routerMessages from './messages/route.js';
 
-export const app = express();
+const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
@@ -17,3 +17,5 @@ app.use(passport.initialize());
 app.use('/auth', routerAuth);
 app.use('/chats', routerChats);
 app.use('/messages', routerMessages);
+
+export default app;
