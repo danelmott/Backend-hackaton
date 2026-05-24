@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import { prisma } from "../../lib/prismaClient.js";
 import { askClaude } from '../../lib/IA.service.js';
+import { getUserProfile, profileToContext, saveUserProfile } from '../../profile/profile.service.js';
+import { extractProfileFromMessage } from '../../profile/extractProfile.js';
 
 const DEFAULT_CHAT_TITLE = 'Nuevo chat';
 const TITLE_MAX_LENGTH = 60;
@@ -42,11 +44,19 @@ export const sendMessage = async (chatId, userId, content) => {
             }
         });
         
+        const extracted = extractProfileFromMessage(content);
+        if (Object.keys(extracted).length > 0) {
+            await saveUserProfile(userId, extracted);
+        }
+
+        const profile = await getUserProfile(userId);
+
         const aiResponse = await askClaude({
             message: content,
             history: previousMessages,
             modo: chat.mode,
-            userContext: null,
+            userContext: profileToContext(profile),
+            userId,
         });
         
         const assistantMessage = await prisma.message.create({

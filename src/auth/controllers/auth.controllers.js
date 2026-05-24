@@ -1,5 +1,6 @@
 import * as authServices from '../services/auth.services.js'
 import * as authSchemas from '../../lib/validators/auth.schemas.js'
+import { redirectToClient } from '../../lib/clientUrl.js'
 
 export const logginController = async(req, res) => {
     try {
@@ -84,8 +85,7 @@ export const logoutController = async (req, res) => {
             await authServices.logout(refreshToken);
         }
         
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        authServices.clearAuthCookies(res);
         
         return res.status(200).json({ message: 'Sesión cerrada exitosamente' });
     } 
@@ -118,22 +118,18 @@ export const refreshController = async (req, res) => {
         return res.status(200).json(tokens);
     } 
     catch (error) {
-        // Clear cookies is a good practice if rotating fails
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        authServices.clearAuthCookies(res);
         return res.status(401).json(error);
     }
 }
 
 export const googleCallbackController = async (req, res) => {
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-
     try {
         const user = req.user;
 
         if (!user?.id || !user?.email) {
             console.error('[Google OAuth] Usuario inválido en callback:', user);
-            return res.redirect(`${clientUrl}/chat?error=google_no_user`);
+            return redirectToClient(res, '/chat?error=google_no_user');
         }
 
         const accessToken = authServices.generateAccessToken(user);
@@ -142,9 +138,9 @@ export const googleCallbackController = async (req, res) => {
         await authServices.saveRefreshToken(user.id, refreshToken);
         authServices.setTokenCookies(res, accessToken, refreshToken);
 
-        return res.redirect(`${clientUrl}/chat`);
+        return redirectToClient(res, '/chat');
     } catch (error) {
         console.error('[Google OAuth] Error en callback controller:', error);
-        return res.redirect(`${clientUrl}/chat?error=google`);
+        return redirectToClient(res, '/chat?error=google');
     }
 };

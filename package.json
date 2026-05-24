@@ -17,16 +17,18 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "prisma generate && prisma migrate deploy"
+    "build": "prisma generate",
+    "vercel-build": "prisma generate && prisma migrate deploy",
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "nodemon": "^3.1.14",
-    "prisma": "6.19.3"
+    "nodemon": "^3.1.14"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
     "@prisma/client": "6.19.3",
+    "prisma": "6.19.3",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",

@@ -61,17 +61,10 @@ export const saveRefreshToken = async (userId, token) => {
 }
 
 //COOKIES
-export const setTokenCookies = (res, accessToken, refreshToken) => {
-    const cookieOptions = {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    };
-
-    res.cookie('accessToken', accessToken, cookieOptions);
-    res.cookie('refreshToken', refreshToken, cookieOptions);
-};
+export {
+  setAuthCookies as setTokenCookies,
+  clearAuthCookies,
+} from '../../lib/cookieOptions.js';
 
 
 export const rotateRefreshToken = async (userId, oldToken) => {

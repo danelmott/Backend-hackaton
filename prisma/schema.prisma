@@ -40,6 +40,41 @@ model User {
   refreshToken  RefreshToken[]
   accounts      Account[]
   verifyToken   VerifyToken[]
+  profile       UserProfile?
+  productInterests ProductInterest[]
+}
+
+model UserProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  objective            String?
+  monthlyIncome        Int?
+  currentSavings       Int?
+  fixedExpenses        Int?
+  goalTimeframe        String?
+  productsOfInterest   String[] @default([])
+  employmentType       String?
+  inferredProfile      String?
+  urgencyLevel         String?
+  financialHealthScore Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model ProductInterest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  variant   String?
+  count     Int      @default(1)
+  lastAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
 }
 
 model Account {
