@@ -9,3 +9,18 @@ export const transporter = nodemailer.createTransport({
         pass: process.env.SMTP_PASS
     }
 });
+
+export const sendEmail = async (to, subject, html) => {
+    try {
+        const info = await transporter.sendMail({
+            from: `"Serfinanza Soporte" <${process.env.SMTP_USER}>`, 
+            to,
+            subject,
+            html,
+        });
+        return info;
+    } catch (error) {
+        console.error('Error al enviar el correo:', error);
+        throw error;
+    }
+};

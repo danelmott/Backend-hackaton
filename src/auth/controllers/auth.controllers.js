@@ -26,10 +26,16 @@ export const registerController = async(req, res) => {
         }
         
         const result = await authServices.registerUser(validation.data.email, validation.data.password);
-        return res.status(201).json(result);
+        
+        return res.status(201).json({
+            message: 'Si el correo electrónico no ha sido registrado previamente, se te ha enviado un código de verificación. Por favor revisa tu bandeja de entrada.'
+        });
     } 
     catch (error) {
-        return res.status(400).json(error);
+        // Obfuscate the error for security, returning a standard generic message
+        return res.status(201).json({
+            message: 'Si el correo electrónico no ha sido registrado previamente, se te ha enviado un código de verificación. Por favor revisa tu bandeja de entrada.'
+        });
     }
 }
 
@@ -39,10 +45,10 @@ export const verifyCodeController = async(req, res) => {
         if(!validation.success) {
             return res.status(400).json({message: 'Hubo un error en la validacion de datos', error: validation.error.errors});
         }
-
+        
         const result = await authServices.verifyRegisterCode(validation.data.email, validation.data.code);
         authServices.setTokenCookies(res, result.accessToken, result.refreshToken);
-
+        
         return res.status(200).json(result);
     } 
     catch (error) {
@@ -56,12 +62,18 @@ export const resendVerifyCodeController = async(req, res) => {
         if (!email) {
             return res.status(400).json({ message: 'El correo electrónico es requerido', code: 'EMAIL_REQUIRED' });
         }
-
+        
         await authServices.resendVerifyCode(email);
-        return res.status(200).json({ message: 'Código de verificación reenviado exitosamente' });
+        
+        return res.status(200).json({ 
+            message: 'Si el correo electrónico existe y no ha sido verificado, se te ha reenviado un código. Por favor revisa tu bandeja.' 
+        });
     } 
     catch (error) {
-        return res.status(400).json(error);
+        // Obfuscate error for security logic here too
+        return res.status(200).json({ 
+            message: 'Si el correo electrónico existe y no ha sido verificado, se te ha reenviado un código. Por favor revisa tu bandeja.' 
+        });
     }
 }
 
@@ -99,7 +111,7 @@ export const refreshController = async (req, res) => {
         if (!oldToken) {
             return res.status(401).json({ message: 'No hay token de refresco provisto', code: 'NO_REFRESH_TOKEN' });
         }
-
+        
         const tokens = await authServices.rotateRefreshToken(userId, oldToken);
         authServices.setTokenCookies(res, tokens.accessToken, tokens.refreshToken);
         
@@ -118,12 +130,13 @@ export const googleCallbackController = async (req, res) => {
         const user = req.user;
         const accessToken = authServices.generateAccessToken(user);
         const refreshToken = authServices.generateRefreshToken(user);
-
+        
         await authServices.saveRefreshToken(user.id, refreshToken);
         authServices.setTokenCookies(res, accessToken, refreshToken);
-
+        
         return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
-    } catch(error) {
+    } 
+    catch(error) {
         console.error("Error in google callback controller: ", error);
         return res.redirect(`${process.env.CLIENT_URL}/login?error=server_error`);
     }

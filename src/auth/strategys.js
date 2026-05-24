@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { ExtractJwt, Strategy as passportJwt } from "passport-jwt";
-import { Strategy as passportLocal } from "passport-local";
-import { Strategy } from 'passport-google-oauth20';
+import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { prisma } from '../lib/prismaClient.js'
 import bcrypt from 'bcrypt';
 import passport from 'passport';
@@ -13,7 +13,7 @@ const JWTStratategy = () => {
         new passportJwt(
             {
                 jwtFromRequest: ExtractJwt.fromExtractors([
-                    (req) => req?.cookies?.accessToken ?? null,
+                    (req) => req?.cookies?.accessToken ?? null
                 ]),
                 secretOrKey: process.env.ACCESS_SIGNATURE,
             },

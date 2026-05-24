@@ -23,3 +23,4 @@ export const resendEmailSchema = z.object({
         message: 'El formato de correo electronico no es valido'
     })
 })
+
