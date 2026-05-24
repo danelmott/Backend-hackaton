@@ -10,10 +10,11 @@ import routerAdmin from './admin/route.js';
 import cors from 'cors'
 import { getClientUrl } from './lib/clientUrl.js';
 
+const clientUrl = getClientUrl();
 const allowedOrigins = [
-    getClientUrl(),
+    clientUrl,
     ...(process.env.NODE_ENV !== 'production' ? ['http://localhost:3000'] : []),
-].filter(Boolean);
+].filter((origin, index, origins) => origins.indexOf(origin) === index);
 
 const app = express();
 
